@@ -23,7 +23,23 @@ namespace EarTrumpet.Interop.Helpers
         /// every taskbar, so rendering for the sharpest monitor (and letting the shell scale down) avoids
         /// the blur caused by scaling a small icon up on a high-DPI second monitor.
         /// </summary>
+        private static uint _cachedMaxDpi;
+        private static string _cachedFontName;
+        private static bool _hooked;
+
         public static uint GetMaxMonitorDpi()
+        {
+            // Called on every volume tick via the tray icon hash, so cache it until the monitor setup changes.
+            if (!_hooked)
+            {
+                _hooked = true;
+                Microsoft.Win32.SystemEvents.DisplaySettingsChanged += (_, __) => _cachedMaxDpi = 0;
+            }
+            if (_cachedMaxDpi != 0) return _cachedMaxDpi;
+            return _cachedMaxDpi = ComputeMaxMonitorDpi();
+        }
+
+        private static uint ComputeMaxMonitorDpi()
         {
             uint max = 96;
             try
@@ -49,15 +65,19 @@ namespace EarTrumpet.Interop.Helpers
         /// </summary>
         public static Icon RenderGlyphIcon(string glyph, int size, Color color)
         {
-            string fontName = null;
-            using (var fonts = new InstalledFontCollection())
+            // Enumerating installed fonts is slow, so only do it once.
+            if (_cachedFontName == null)
             {
-                foreach (var family in fonts.Families)
+                using (var fonts = new InstalledFontCollection())
                 {
-                    if (family.Name == "Segoe Fluent Icons") { fontName = family.Name; break; }
-                    if (family.Name == "Segoe MDL2 Assets") { fontName = family.Name; }
+                    foreach (var family in fonts.Families)
+                    {
+                        if (family.Name == "Segoe Fluent Icons") { _cachedFontName = family.Name; break; }
+                        if (family.Name == "Segoe MDL2 Assets") { _cachedFontName = family.Name; }
+                    }
                 }
             }
+            var fontName = _cachedFontName;
             if (fontName == null) throw new InvalidOperationException("No Segoe icon font installed");
 
             using (var bitmap = new Bitmap(size, size, PixelFormat.Format32bppArgb))

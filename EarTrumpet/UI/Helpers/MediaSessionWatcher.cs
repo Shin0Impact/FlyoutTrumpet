@@ -65,8 +65,9 @@ namespace EarTrumpet.UI.Helpers
             try
             {
                 _manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
-                _manager.CurrentSessionChanged += (_, __) => _dispatcher.BeginInvoke((Action)AttachToCurrentSession);
-                AttachToCurrentSession();
+                // A different app starting media makes it the current session: that should pop the flyout.
+                _manager.CurrentSessionChanged += (_, __) => _dispatcher.BeginInvoke((Action)(() => AttachToCurrentSession(true)));
+                AttachToCurrentSession(false);
             }
             catch (Exception ex)
             {
@@ -79,7 +80,7 @@ namespace EarTrumpet.UI.Helpers
         public void Next() => _session?.TrySkipNextAsync();
         public void Previous() => _session?.TrySkipPreviousAsync();
 
-        private void AttachToCurrentSession()
+        private void AttachToCurrentSession(bool show)
         {
             if (_session != null)
             {
@@ -97,7 +98,7 @@ namespace EarTrumpet.UI.Helpers
                 _session.PlaybackInfoChanged += OnSessionChanged;
                 _session.TimelinePropertiesChanged += OnSessionChanged;
             }
-            Refresh(false);
+            Refresh(show);
         }
 
         // WinRT raises these on a worker thread.

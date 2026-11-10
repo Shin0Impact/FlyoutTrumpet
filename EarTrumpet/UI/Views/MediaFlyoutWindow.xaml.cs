@@ -78,6 +78,15 @@ namespace EarTrumpet.UI.Views
             }
         }
 
+        /// <summary>Shows the flyout for the media that is currently known (e.g. after a volume change).</summary>
+        public void ShowIfMedia()
+        {
+            if (_snapshot != null && !string.IsNullOrWhiteSpace(_snapshot.Title))
+            {
+                ShowFlyout();
+            }
+        }
+
         private void ShowFlyout()
         {
             var workArea = SystemParameters.WorkArea;

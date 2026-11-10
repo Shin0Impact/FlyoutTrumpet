@@ -2148,7 +2148,7 @@
             </Style>
             <DataTemplate DataType="{x:Type vm:DevicePickerViewModel}">
                 <ContentControl Template="{StaticResource DialogChrome}">
-                    <ItemsControl ItemsSource="{Binding Devices}">
+                    <ItemsControl MinWidth="300" ItemsSource="{Binding Devices}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Vertical" />

@@ -38,6 +38,8 @@ namespace EarTrumpet
         private ShellNotifyIcon _trayIcon;
         private MediaSessionWatcher _mediaWatcher;
         private MediaFlyoutWindow _mediaFlyout;
+        private int _lastVolume = -1;
+        private bool _lastMuted;
         private WindowHolder _mixerWindow;
         private WindowHolder _settingsWindow;
         private ErrorReporter _errorReporter;
@@ -123,6 +125,23 @@ namespace EarTrumpet
             _mediaWatcher = new MediaSessionWatcher();
             _mediaFlyout = new MediaFlyoutWindow(_mediaWatcher);
             _mediaWatcher.Start();
+
+            // Like the old Windows 10 flyout: changing the volume also shows what's playing.
+            CollectionViewModel.TrayPropertyChanged += () =>
+            {
+                var device = CollectionViewModel.Default;
+                if (device == null) return;
+
+                var changed = _lastVolume != -1 && (device.Volume != _lastVolume || device.IsMuted != _lastMuted);
+                _lastVolume = device.Volume;
+                _lastMuted = device.IsMuted;
+
+                // The normal volume flyout already shows the slider while it is open.
+                if (changed && _flyoutViewModel.State == FlyoutViewState.Hidden)
+                {
+                    _mediaFlyout.ShowIfMedia();
+                }
+            };
 
             DisplayFirstRunExperience();
         }
