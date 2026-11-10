@@ -97,15 +97,35 @@ namespace EarTrumpet.UI.Views
         private void ShowFlyout()
         {
             var workArea = SystemParameters.WorkArea;
+            var targetTop = workArea.Top + 16;
             Left = workArea.Left + 16;
-            Top = workArea.Top + 16;
 
             if (!_isShown)
             {
                 _isShown = true;
+
+                // Slide down from above the top edge of the screen.
+                BeginAnimation(TopProperty, null);
+                if (!IsVisible) Top = targetTop - 300;
                 Show();
+                UpdateLayout();
                 ApplyBackground();
                 _positionTimer.Start();
+
+                var from = IsVisible && Top > targetTop - ActualHeight - 16 ? Top : targetTop - ActualHeight - 16;
+                var slideIn = new DoubleAnimation(from, targetTop, TimeSpan.FromMilliseconds(220))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                slideIn.Completed += (_, __) =>
+                {
+                    if (_isShown)
+                    {
+                        BeginAnimation(TopProperty, null);
+                        Top = targetTop;
+                    }
+                };
+                BeginAnimation(TopProperty, slideIn);
             }
 
             _hideTimer.Stop();
@@ -119,8 +139,23 @@ namespace EarTrumpet.UI.Views
 
             _isShown = false;
             _positionTimer.Stop();
-            AccentPolicyLibrary.DisableAcrylic(this);
-            Hide();
+
+            // Slide back up and out of view.
+            var offscreenTop = SystemParameters.WorkArea.Top - ActualHeight - 16;
+            var slideOut = new DoubleAnimation(Top, offscreenTop, TimeSpan.FromMilliseconds(160))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            };
+            slideOut.Completed += (_, __) =>
+            {
+                if (!_isShown)
+                {
+                    BeginAnimation(TopProperty, null);
+                    AccentPolicyLibrary.DisableAcrylic(this);
+                    Hide();
+                }
+            };
+            BeginAnimation(TopProperty, slideOut);
         }
 
         private void ApplyBackground()
