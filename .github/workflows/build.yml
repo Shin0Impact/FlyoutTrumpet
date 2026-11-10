@@ -12,6 +12,10 @@ jobs:
         with:
           fetch-depth: 0   # GitVersion needs the full history
 
+      # GitVersion (EarTrumpet's version numbering) insists on a 'master' branch existing.
+      - name: Create master branch for GitVersion
+        run: git branch master
+
       - uses: microsoft/setup-msbuild@v2
 
       - uses: NuGet/setup-nuget@v2
