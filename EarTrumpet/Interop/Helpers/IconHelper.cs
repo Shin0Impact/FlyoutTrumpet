@@ -24,7 +24,6 @@ namespace EarTrumpet.Interop.Helpers
         /// the blur caused by scaling a small icon up on a high-DPI second monitor.
         /// </summary>
         private static uint _cachedMaxDpi;
-        private static string _cachedFontName;
         private static bool _hooked;
 
         public static uint GetMaxMonitorDpi()
@@ -58,42 +57,6 @@ namespace EarTrumpet.Interop.Helpers
                 Trace.WriteLine($"IconHelper GetMaxMonitorDpi: {ex}");
             }
             return max;
-        }
-
-        /// <summary>
-        /// Draws a Segoe Fluent Icons / Segoe MDL2 Assets glyph into a crisp, anti-aliased, transparent icon of the exact pixel size.
-        /// </summary>
-        public static Icon RenderGlyphIcon(string glyph, int size, Color color)
-        {
-            // Enumerating installed fonts is slow, so only do it once.
-            if (_cachedFontName == null)
-            {
-                using (var fonts = new InstalledFontCollection())
-                {
-                    foreach (var family in fonts.Families)
-                    {
-                        if (family.Name == "Segoe Fluent Icons") { _cachedFontName = family.Name; break; }
-                        if (family.Name == "Segoe MDL2 Assets") { _cachedFontName = family.Name; }
-                    }
-                }
-            }
-            var fontName = _cachedFontName;
-            if (fontName == null) throw new InvalidOperationException("No Segoe icon font installed");
-
-            using (var bitmap = new Bitmap(size, size, PixelFormat.Format32bppArgb))
-            {
-                using (var g = Graphics.FromImage(bitmap))
-                using (var font = new Font(fontName, size * 0.95f, FontStyle.Regular, GraphicsUnit.Pixel))
-                using (var brush = new SolidBrush(color))
-                using (var format = new StringFormat(StringFormat.GenericTypographic) { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
-                {
-                    g.Clear(Color.Transparent);
-                    g.SmoothingMode = SmoothingMode.AntiAlias;
-                    g.TextRenderingHint = TextRenderingHint.AntiAlias;
-                    g.DrawString(glyph, font, brush, new RectangleF(0, 0, size, size), format);
-                }
-                return Icon.FromHandle(bitmap.GetHicon()).AsDisposableIcon();
-            }
         }
 
         public static Icon LoadIconForTaskbar(string path, uint dpi)

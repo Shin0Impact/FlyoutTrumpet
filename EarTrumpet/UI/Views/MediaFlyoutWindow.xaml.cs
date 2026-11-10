@@ -1,5 +1,6 @@
 using EarTrumpet.Extensions;
 using EarTrumpet.Interop;
+using EarTrumpet.Interop.Helpers;
 using EarTrumpet.UI.Helpers;
 using System;
 using System.Windows;
@@ -16,7 +17,7 @@ namespace EarTrumpet.UI.Views
     /// </summary>
     public partial class MediaFlyoutWindow : Window
     {
-        private static readonly TimeSpan VisibleDuration = TimeSpan.FromSeconds(2.5);
+        private static readonly TimeSpan VisibleDuration = TimeSpan.FromSeconds(2);
 
         private readonly MediaSessionWatcher _watcher;
         private readonly DispatcherTimer _hideTimer;
@@ -39,6 +40,10 @@ namespace EarTrumpet.UI.Views
 
             MouseEnter += (_, __) => _hideTimer.Stop();
             MouseLeave += (_, __) => { if (_isShown) _hideTimer.Start(); };
+
+            // Same acrylic/solid background logic as the volume flyout, so it follows the Windows
+            // "Transparency effects" and accent colour settings (and light/dark mode).
+            Themes.Manager.Current.ThemeChanged += ApplyBackground;
 
             SourceInitialized += (_, __) =>
             {
@@ -98,6 +103,7 @@ namespace EarTrumpet.UI.Views
             {
                 _isShown = true;
                 Show();
+                ApplyBackground();
                 _positionTimer.Start();
             }
 
@@ -112,7 +118,16 @@ namespace EarTrumpet.UI.Views
 
             _isShown = false;
             _positionTimer.Stop();
+            AccentPolicyLibrary.DisableAcrylic(this);
             Hide();
+        }
+
+        private void ApplyBackground()
+        {
+            if (_isShown)
+            {
+                AccentPolicyLibrary.EnableAcrylic(this, Themes.Manager.Current.ResolveRef(this, "AcrylicColor_Flyout"), User32.AccentFlags.DrawAllBorders);
+            }
         }
 
         private void UpdateTimeline()

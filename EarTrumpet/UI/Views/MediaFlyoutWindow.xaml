@@ -1,9 +1,14 @@
 <Window x:Class="EarTrumpet.UI.Views.MediaFlyoutWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:Theme="clr-namespace:EarTrumpet.UI.Themes"
         Title="EarTrumpet Now Playing"
         Width="380"
-        Background="#202327"
+        Theme:Brush.Foreground="Text"
+        Theme:Options.Scope="Flyout"
+        Theme:Options.Source="System"
+        AllowsTransparency="True"
+        Background="Transparent"
         ResizeMode="NoResize"
         ShowActivated="False"
         ShowInTaskbar="False"
@@ -17,7 +22,7 @@
             <Setter Property="Width" Value="40" />
             <Setter Property="Height" Value="36" />
             <Setter Property="Margin" Value="4,0" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Theme:Brush.Foreground" Value="Theme=Text, HighContrast=ControlText" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
             <Setter Property="FontSize" Value="16" />
@@ -32,10 +37,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bg" Property="Background" Value="#33FFFFFF" />
+                                <Setter TargetName="bg" Property="Background" Value="#33808080" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="bg" Property="Background" Value="#22FFFFFF" />
+                                <Setter TargetName="bg" Property="Background" Value="#22808080" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.35" />
@@ -46,9 +51,7 @@
             </Setter>
         </Style>
     </Window.Resources>
-    <Border Background="#202327"
-            BorderBrush="#33FFFFFF"
-            BorderThickness="1">
+    <Border Theme:Brush.Background="FlyoutBackground">
         <Grid Margin="16,14,16,12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -62,14 +65,15 @@
             <Border Width="88"
                     Height="88"
                     Margin="0,0,14,0"
-                    Background="#22FFFFFF"
+                    Background="#22808080"
                     CornerRadius="6">
                 <Grid>
                     <TextBlock HorizontalAlignment="Center"
                                VerticalAlignment="Center"
                                FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                FontSize="40"
-                               Foreground="#A8D0D6"
+                               Opacity="0.6"
+                               Theme:Brush.Foreground="Text"
                                Text="&#xE8D6;" />
                     <Border x:Name="ThumbnailBorder" CornerRadius="6" />
                 </Grid>
@@ -79,12 +83,13 @@
                 <TextBlock x:Name="TitleText"
                            FontSize="15"
                            FontWeight="SemiBold"
-                           Foreground="White"
+                           Theme:Brush.Foreground="Text"
                            TextTrimming="CharacterEllipsis" />
                 <TextBlock x:Name="ArtistText"
                            Margin="0,2,0,0"
                            FontSize="12"
-                           Foreground="#B3FFFFFF"
+                           Opacity="0.7"
+                           Theme:Brush.Foreground="Text"
                            TextTrimming="CharacterEllipsis" />
                 <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
                     <Button x:Name="PrevButton"
@@ -113,21 +118,23 @@
                 <TextBlock x:Name="PositionText"
                            VerticalAlignment="Center"
                            FontSize="11"
-                           Foreground="#B3FFFFFF"
+                           Opacity="0.7"
+                           Theme:Brush.Foreground="Text"
                            Text="0:00" />
                 <ProgressBar x:Name="TimelineBar"
                              Grid.Column="1"
                              Height="4"
                              Margin="10,0"
-                             Background="#33FFFFFF"
+                             Theme:Brush.Background="Theme=#40808080, HighContrast=Window"
                              BorderThickness="0"
-                             Foreground="#A8D0D6"
+                             Theme:Brush.Foreground="Theme=SystemAccent, HighContrast=Highlight"
                              Maximum="1" />
                 <TextBlock x:Name="DurationText"
                            Grid.Column="2"
                            VerticalAlignment="Center"
                            FontSize="11"
-                           Foreground="#B3FFFFFF"
+                           Opacity="0.7"
+                           Theme:Brush.Foreground="Text"
                            Text="0:00" />
             </Grid>
         </Grid>

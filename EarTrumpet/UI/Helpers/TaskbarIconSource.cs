@@ -77,12 +77,6 @@ namespace EarTrumpet.UI.Helpers
                 kind = IconKind.EarTrumpet;
             }
 
-            var rendered = TryRenderGlyphIcon(kind);
-            if (rendered != null)
-            {
-                return rendered;
-            }
-
             try
             {
                 if (System.Windows.SystemParameters.HighContrast)
@@ -119,47 +113,9 @@ namespace EarTrumpet.UI.Helpers
             }
         }
 
-        // Draws the speaker/mute icon ourselves at the size needed by the sharpest monitor, so it stays crisp
-        // on a mixed-DPI setup. Returns null (falling back to the stock icons) for other kinds or on any failure.
-        private Icon TryRenderGlyphIcon(IconKind kind)
-        {
-            string glyph;
-            switch (kind)
-            {
-                case IconKind.Muted: glyph = "\uE74F"; break;
-                case IconKind.SpeakerZeroBars: glyph = "\uE992"; break;
-                case IconKind.SpeakerOneBar: glyph = "\uE993"; break;
-                case IconKind.SpeakerTwoBars: glyph = "\uE994"; break;
-                case IconKind.SpeakerThreeBars: glyph = "\uE995"; break;
-                default: return null;
-            }
-
-            try
-            {
-                System.Drawing.Color color;
-                if (System.Windows.SystemParameters.HighContrast)
-                {
-                    var c = _isMouseOver ? System.Windows.SystemColors.HighlightTextColor : System.Windows.SystemColors.WindowTextColor;
-                    color = System.Drawing.Color.FromArgb(c.A, c.R, c.G, c.B);
-                }
-                else
-                {
-                    color = SystemSettings.IsSystemLightTheme ? System.Drawing.Color.Black : System.Drawing.Color.White;
-                }
-
-                var size = User32.GetSystemMetricsForDpi(User32.SystemMetrics.SM_CXSMICON, IconHelper.GetMaxMonitorDpi());
-                return IconHelper.RenderGlyphIcon(glyph, size, color);
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"TaskbarIconSource TryRenderGlyphIcon: {ex}");
-                return null;
-            }
-        }
-
         private static Icon LoadIcon(IconKind kind)
         {
-            uint dpi = WindowsTaskbar.Dpi;
+            uint dpi = IconHelper.GetMaxMonitorDpi(); // sharpest monitor, the shell scales it down elsewhere
             switch (kind)
             {
                 case IconKind.EarTrumpet:
