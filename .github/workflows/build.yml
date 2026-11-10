@@ -4,6 +4,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write   # needed to publish releases
+
 jobs:
   build:
     runs-on: windows-2022
@@ -27,6 +30,10 @@ jobs:
       - name: Build EarTrumpet
         run: msbuild EarTrumpet\EarTrumpet.csproj /p:Configuration=Release /p:Platform=x86 /p:ChannelVersion= /m /v:minimal
 
+      # The app reads this to know which build it is (for "Check for updates").
+      - name: Stamp build number
+        run: Set-Content -Path Build\Release\build.txt -Value ${{ github.run_number }}
+
       - name: Zip the portable build
         run: Compress-Archive -Path Build\Release\* -DestinationPath EarTrumpet-custom.zip
 
@@ -34,3 +41,12 @@ jobs:
         with:
           name: EarTrumpet-custom
           path: EarTrumpet-custom.zip
+
+      # A public release is what the in-app updater (and you) download from.
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+          make_latest: true
+          files: EarTrumpet-custom.zip
