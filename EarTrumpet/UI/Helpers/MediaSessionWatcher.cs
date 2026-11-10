@@ -87,7 +87,7 @@ namespace EarTrumpet.UI.Helpers
             var snapshot = _snapshot;
             if (_session == null || snapshot == null) return;
 
-            _session.TryChangePlaybackPositionAsync((snapshot.StartTime + position).Ticks);
+            var request = _session.TryChangePlaybackPositionAsync((snapshot.StartTime + position).Ticks);
             snapshot.SetPosition(position, DateTimeOffset.Now);
         }
 
