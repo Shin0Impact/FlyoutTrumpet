@@ -137,7 +137,9 @@ namespace EarTrumpet.UI.Views
             if (!System.Windows.Forms.Screen.FromHandle(this.GetHandle()).Equals(taskbar.ContainingScreen))
             {
                 var bounds = taskbar.ContainingScreen.Bounds;
-                this.SetWindowPos(bounds.Top, bounds.Left, 100, 100);
+                // Move only (SWP_NOSIZE): resizing here would shrink Width/Height, which the maths below reads.
+                User32.SetWindowPos(this.GetHandle(), IntPtr.Zero, bounds.Left, bounds.Top, 0, 0,
+                    User32.WindowPosFlags.SWP_NOSIZE | User32.WindowPosFlags.SWP_NOZORDER | User32.WindowPosFlags.SWP_NOACTIVATE);
             }
 
             // Force layout so we can be sure lists have created/removed containers.
