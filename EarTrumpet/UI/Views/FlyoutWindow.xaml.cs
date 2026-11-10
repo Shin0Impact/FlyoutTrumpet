@@ -132,6 +132,14 @@ namespace EarTrumpet.UI.Views
                 return;
             }
 
+            // The maths below is in pixels and uses this window's DPI. If the flyout last lived on a monitor with a
+            // different DPI, move it onto the target monitor first so the DPI is the target monitor's.
+            if (!System.Windows.Forms.Screen.FromHandle(this.GetHandle()).Equals(taskbar.ContainingScreen))
+            {
+                var bounds = taskbar.ContainingScreen.Bounds;
+                this.SetWindowPos(bounds.Top, bounds.Left, 100, 100);
+            }
+
             // Force layout so we can be sure lists have created/removed containers.
             UpdateLayout();
             LayoutRoot.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
