@@ -57,7 +57,6 @@ namespace EarTrumpet.UI.Helpers
         private GlobalSystemMediaTransportControlsSessionManager _manager;
         private GlobalSystemMediaTransportControlsSession _session;
         private string _trackKey;
-        private bool _wasPlaying;
         private ImageSource _thumbnail;
         private MediaSnapshot _snapshot;
 
@@ -85,7 +84,7 @@ namespace EarTrumpet.UI.Helpers
         {
             if (_session != null)
             {
-                _session.MediaPropertiesChanged -= OnSessionChanged;
+                _session.MediaPropertiesChanged -= OnMediaPropertiesChanged;
                 _session.PlaybackInfoChanged -= OnSessionChanged;
                 _session.TimelinePropertiesChanged -= OnTimelineChanged;
             }
@@ -95,7 +94,7 @@ namespace EarTrumpet.UI.Helpers
 
             if (_session != null)
             {
-                _session.MediaPropertiesChanged += OnSessionChanged;
+                _session.MediaPropertiesChanged += OnMediaPropertiesChanged;
                 _session.PlaybackInfoChanged += OnSessionChanged;
                 _session.TimelinePropertiesChanged += OnTimelineChanged;
             }
@@ -106,6 +105,12 @@ namespace EarTrumpet.UI.Helpers
         private void OnSessionChanged(GlobalSystemMediaTransportControlsSession sender, object args)
         {
             _dispatcher.BeginInvoke((Action)(() => Refresh(true)));
+        }
+
+        // Title/art changed. Browsers often deliver the new cover after the title, so re-read the art every time.
+        private void OnMediaPropertiesChanged(GlobalSystemMediaTransportControlsSession sender, object args)
+        {
+            _dispatcher.BeginInvoke((Action)(() => Refresh(true, true)));
         }
 
         // Players fire this constantly while playing; just keep the position current, don't rebuild anything.
@@ -128,7 +133,7 @@ namespace EarTrumpet.UI.Helpers
             }));
         }
 
-        private async void Refresh(bool allowShow)
+        private async void Refresh(bool allowShow, bool reloadThumbnail = false)
         {
             try
             {
@@ -152,8 +157,12 @@ namespace EarTrumpet.UI.Helpers
                 {
                     _trackKey = key;
                     _thumbnail = null;
-                    _thumbnail = await LoadThumbnailAsync(props.Thumbnail);
+                }
+                if (trackChanged || reloadThumbnail || _thumbnail == null)
+                {
+                    var loaded = await LoadThumbnailAsync(props.Thumbnail);
                     if (session != _session) return;
+                    if (loaded != null || trackChanged) _thumbnail = loaded;
                 }
 
                 var snapshot = new MediaSnapshot
@@ -170,9 +179,8 @@ namespace EarTrumpet.UI.Helpers
                 };
                 snapshot.SetPosition(timeline.Position - timeline.StartTime, timeline.LastUpdatedTime);
 
-                var show = allowShow && !string.IsNullOrWhiteSpace(snapshot.Title) &&
-                           (trackChanged || snapshot.IsPlaying != _wasPlaying);
-                _wasPlaying = snapshot.IsPlaying;
+                // Only a new track/video (or a different app taking over) shows the flyout - pausing or stopping must not.
+                var show = allowShow && !string.IsNullOrWhiteSpace(snapshot.Title) && trackChanged;
                 _snapshot = snapshot;
                 Changed?.Invoke(snapshot, show);
             }
