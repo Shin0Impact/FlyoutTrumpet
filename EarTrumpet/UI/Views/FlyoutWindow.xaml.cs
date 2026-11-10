@@ -57,6 +57,7 @@ namespace EarTrumpet.UI.Views
 
         private void OnStateChanged(object sender, object e)
         {
+            StopResizeAnimation();
             switch (_viewModel.State)
             {
                 case FlyoutViewState.Opening:
@@ -226,8 +227,57 @@ namespace EarTrumpet.UI.Views
                     left = FlowDirection == FlowDirection.LeftToRight ? adjustedWorkingAreaRight - flyoutWidth - xOffset : adjustedWorkingAreaLeft + xOffset;
                     break;
             }
-            this.SetWindowPos(top, left, flyoutHeight, flyoutWidth);
+            if (_viewModel.State == FlyoutViewState.Open && IsVisible)
+            {
+                // Content changed while open (e.g. switching output device): glide to the new size instead of jumping.
+                AnimateWindowTo(top, left, flyoutHeight, flyoutWidth);
+            }
+            else
+            {
+                StopResizeAnimation();
+                this.SetWindowPos(top, left, flyoutHeight, flyoutWidth);
+            }
             _viewModel.UpdateWindowPos(top, left, flyoutHeight, flyoutWidth);
+        }
+
+        private const double ResizeAnimationMilliseconds = 140;
+        private EventHandler _resizeAnimationHandler;
+
+        private void AnimateWindowTo(double top, double left, double height, double width)
+        {
+            User32.GetWindowRect(this.GetHandle(), out var rect);
+            double fromTop = rect.Top;
+            double fromHeight = rect.Bottom - rect.Top;
+
+            StopResizeAnimation();
+
+            if (Math.Abs(fromTop - top) < 1 && Math.Abs(fromHeight - height) < 1)
+            {
+                this.SetWindowPos(top, left, height, width);
+                return;
+            }
+
+            var start = DateTime.UtcNow;
+            _resizeAnimationHandler = (_, __) =>
+            {
+                var t = Math.Min(1, (DateTime.UtcNow - start).TotalMilliseconds / ResizeAnimationMilliseconds);
+                var eased = 1 - Math.Pow(1 - t, 3); // ease-out: quick start, soft landing
+                this.SetWindowPos(fromTop + (top - fromTop) * eased, left, fromHeight + (height - fromHeight) * eased, width);
+                if (t >= 1)
+                {
+                    StopResizeAnimation();
+                }
+            };
+            System.Windows.Media.CompositionTarget.Rendering += _resizeAnimationHandler;
+        }
+
+        private void StopResizeAnimation()
+        {
+            if (_resizeAnimationHandler != null)
+            {
+                System.Windows.Media.CompositionTarget.Rendering -= _resizeAnimationHandler;
+                _resizeAnimationHandler = null;
+            }
         }
 
         private void EnableAcrylicIfApplicable(WindowsTaskbar.State taskbar)
