@@ -193,6 +193,8 @@
                             HorizontalAlignment="Right"
                             VerticalAlignment="Top"
                             Click="DevicePickerButton_Click"
+                            Focusable="False"
+                            FocusVisualStyle="{x:Null}"
                             IsEnabled="{Binding CanExpand}"
                             Style="{StaticResource ExpandCollapseButtonStyle}"
                             ToolTip="Change output device">
@@ -201,7 +203,7 @@
                                    Theme:Brush.Foreground="{Binding (Theme:Brush.Foreground), RelativeSource={RelativeSource AncestorType=Button}}"
                                    FontSize="{DynamicResource Mutable_ExpandCollapseButtonGlyphFontSize}"
                                    Style="{StaticResource GlyphTextBlockStyle}"
-                                   Text="&#xE8EA;" />
+                                   Text="&#xE7F5;" />
                     </Button>
                 </Grid>
             </Grid>

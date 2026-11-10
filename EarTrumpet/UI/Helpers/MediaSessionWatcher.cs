@@ -20,6 +20,8 @@ namespace EarTrumpet.UI.Helpers
         public bool CanPlayPause { get; set; }
         public ImageSource Thumbnail { get; set; }
         public TimeSpan Duration { get; set; }
+        public TimeSpan StartTime { get; set; }
+        public bool CanSeek { get; set; }
 
         private TimeSpan _position;
         private DateTimeOffset _positionTime;
@@ -79,6 +81,15 @@ namespace EarTrumpet.UI.Helpers
         public void PlayPause() => _session?.TryTogglePlayPauseAsync();
         public void Next() => _session?.TrySkipNextAsync();
         public void Previous() => _session?.TrySkipPreviousAsync();
+
+        public void Seek(TimeSpan position)
+        {
+            var snapshot = _snapshot;
+            if (_session == null || snapshot == null) return;
+
+            _session.TryChangePlaybackPositionAsync((snapshot.StartTime + position).Ticks);
+            snapshot.SetPosition(position, DateTimeOffset.Now);
+        }
 
         private void AttachToCurrentSession(bool show)
         {
@@ -176,6 +187,8 @@ namespace EarTrumpet.UI.Helpers
                     CanPlayPause = playback.Controls.IsPlayPauseToggleEnabled,
                     Thumbnail = _thumbnail,
                     Duration = timeline.EndTime - timeline.StartTime,
+                    StartTime = timeline.StartTime,
+                    CanSeek = playback.Controls.IsPlaybackPositionEnabled,
                 };
                 snapshot.SetPosition(timeline.Position - timeline.StartTime, timeline.LastUpdatedTime);
 

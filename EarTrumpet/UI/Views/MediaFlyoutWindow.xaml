@@ -121,14 +121,23 @@
                            Opacity="0.7"
                            Theme:Brush.Foreground="Text"
                            Text="0:00" />
-                <ProgressBar x:Name="TimelineBar"
-                             Grid.Column="1"
+                <Grid x:Name="SeekArea"
+                      Grid.Column="1"
+                      Height="22"
+                      Margin="10,0"
+                      Background="Transparent"
+                      Cursor="Hand"
+                      MouseLeftButtonDown="SeekArea_MouseLeftButtonDown"
+                      MouseLeftButtonUp="SeekArea_MouseLeftButtonUp"
+                      MouseMove="SeekArea_MouseMove">
+                    <ProgressBar x:Name="TimelineBar"
                              Height="4"
-                             Margin="10,0"
+                             IsHitTestVisible="False"
                              Theme:Brush.Background="Theme=#40808080, HighContrast=Window"
                              BorderThickness="0"
                              Theme:Brush.Foreground="Theme=SystemAccent, HighContrast=Highlight"
                              Maximum="1" />
+                </Grid>
                 <TextBlock x:Name="DurationText"
                            Grid.Column="2"
                            VerticalAlignment="Center"

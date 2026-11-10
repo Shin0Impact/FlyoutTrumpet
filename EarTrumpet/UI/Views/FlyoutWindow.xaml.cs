@@ -19,6 +19,17 @@ namespace EarTrumpet.UI.Views
 
             InitializeComponent();
 
+            if (viewModel is FlyoutViewModel flyoutViewModel)
+            {
+                flyoutViewModel.Dialog.PropertyChanged += (_, e) =>
+                {
+                    if (e.PropertyName == "IsVisible" && !flyoutViewModel.Dialog.IsVisible)
+                    {
+                        Dispatcher.BeginInvoke((Action)(() => DevicesList.FindVisualChild<DeviceView>()?.FocusAndRemoveFocusVisual()));
+                    }
+                };
+            }
+
             _viewModel.StateChanged += OnStateChanged;
             _viewModel.WindowSizeInvalidated += OnWindowsSizeInvalidated;
             SourceInitialized += (_, __) =>
@@ -31,7 +42,9 @@ namespace EarTrumpet.UI.Views
 
         private void DevicePickerButton_Click(object sender, RoutedEventArgs e)
         {
-            (DataContext as FlyoutViewModel)?.OpenDevicePicker((FrameworkElement)sender);
+            // The popup is as wide as the element it is attached to, so use the (full width) device row.
+            var container = DevicesList.FindVisualChild<DeviceView>()?.DeviceListItem ?? (FrameworkElement)sender;
+            (DataContext as FlyoutViewModel)?.OpenDevicePicker(container);
         }
 
         public void Initialize()

@@ -24,6 +24,7 @@ namespace EarTrumpet.UI.Views
         private readonly DispatcherTimer _positionTimer;
         private MediaSnapshot _snapshot;
         private bool _isShown;
+        private bool _isSeeking;
         private ImageSource _shownThumbnail;
 
         public MediaFlyoutWindow(MediaSessionWatcher watcher)
@@ -132,7 +133,7 @@ namespace EarTrumpet.UI.Views
 
         private void UpdateTimeline()
         {
-            if (_snapshot == null) return;
+            if (_snapshot == null || _isSeeking) return;
 
             var position = _snapshot.GetPosition();
             PositionText.Text = Format(position);
@@ -142,6 +143,41 @@ namespace EarTrumpet.UI.Views
         private static string Format(TimeSpan time)
         {
             return time.TotalHours >= 1 ? time.ToString(@"h\:mm\:ss") : time.ToString(@"m\:ss");
+        }
+
+        // Click or drag on the timeline to seek.
+        private double SeekFraction(MouseEventArgs e)
+        {
+            var x = e.GetPosition(SeekArea).X;
+            return Math.Max(0, Math.Min(1, x / Math.Max(1, SeekArea.ActualWidth)));
+        }
+
+        private void PreviewSeek(MouseEventArgs e)
+        {
+            var fraction = SeekFraction(e);
+            TimelineBar.Value = fraction;
+            PositionText.Text = Format(TimeSpan.FromSeconds(fraction * _snapshot.Duration.TotalSeconds));
+        }
+
+        private void SeekArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_snapshot == null || _snapshot.Duration <= TimeSpan.Zero || !_snapshot.CanSeek) return;
+            _isSeeking = true;
+            SeekArea.CaptureMouse();
+            PreviewSeek(e);
+        }
+
+        private void SeekArea_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (_isSeeking) PreviewSeek(e);
+        }
+
+        private void SeekArea_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!_isSeeking) return;
+            _isSeeking = false;
+            SeekArea.ReleaseMouseCapture();
+            _watcher.Seek(TimeSpan.FromSeconds(SeekFraction(e) * _snapshot.Duration.TotalSeconds));
         }
 
         private void PrevButton_Click(object sender, RoutedEventArgs e) => _watcher.Previous();
