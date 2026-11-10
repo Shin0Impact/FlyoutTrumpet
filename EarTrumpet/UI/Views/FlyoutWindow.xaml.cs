@@ -40,11 +40,9 @@ namespace EarTrumpet.UI.Views
             Themes.Manager.Current.ThemeChanged += () => EnableAcrylicIfApplicable(WindowsTaskbar.Current);
         }
 
-        private void DevicePickerButton_Click(object sender, RoutedEventArgs e)
+        private void OtherDevice_Click(object sender, RoutedEventArgs e)
         {
-            // The popup is as wide as the element it is attached to, so use the (full width) device row.
-            var container = DevicesList.FindVisualChild<DeviceView>()?.DeviceListItem ?? (FrameworkElement)sender;
-            (DataContext as FlyoutViewModel)?.OpenDevicePicker(container);
+            ((sender as FrameworkElement)?.DataContext as DeviceViewModel)?.MakeDefaultDevice();
         }
 
         public void Initialize()

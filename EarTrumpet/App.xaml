@@ -2126,68 +2126,6 @@
                     </Grid>
                 </ContentControl>
             </DataTemplate>
-            <Style x:Key="DevicePickerItemButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="Transparent" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                <Setter Property="Theme:Brush.Foreground" Value="Theme=Text, HighContrast=ControlText" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
-                                <ContentPresenter />
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="true">
-                        <Setter Property="Theme:Brush.Background" Value="Theme=#20FFFFFF, HighContrast=Highlight" />
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-            <DataTemplate DataType="{x:Type vm:DevicePickerViewModel}">
-                <ContentControl Template="{StaticResource DialogChrome}">
-                    <ItemsControl MinWidth="300" ItemsSource="{Binding Devices}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button MinHeight="40"
-                                        Command="{Binding Command}"
-                                        Style="{StaticResource DevicePickerItemButtonStyle}">
-                                    <Grid Margin="12,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="24" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock VerticalAlignment="Center"
-                                                   Theme:Brush.Foreground="{Binding (Theme:Brush.Foreground), RelativeSource={RelativeSource AncestorType=Button}}"
-                                                   Style="{StaticResource GlyphTextBlockStyle}"
-                                                   Text="&#xE73E;">
-                                            <TextBlock.Visibility>
-                                                <Binding Path="IsDefault">
-                                                    <Binding.Converter>
-                                                        <BooleanToVisibilityConverter />
-                                                    </Binding.Converter>
-                                                </Binding>
-                                            </TextBlock.Visibility>
-                                        </TextBlock>
-                                        <TextBlock Grid.Column="1"
-                                                   VerticalAlignment="Center"
-                                                   Theme:Brush.Foreground="{Binding (Theme:Brush.Foreground), RelativeSource={RelativeSource AncestorType=Button}}"
-                                                   Text="{Binding DisplayName}"
-                                                   TextTrimming="CharacterEllipsis" />
-                                    </Grid>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ContentControl>
-            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:FocusedDeviceViewModel}">
                 <ContentControl Template="{StaticResource DialogChrome}">
                     <ItemsControl ItemsSource="{Binding Addons}">

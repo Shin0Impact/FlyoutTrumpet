@@ -321,7 +321,6 @@
     <Compile Include="UI\Controls\MenuItemTemplateSelector.cs" />
     <Compile Include="UI\ViewModels\ContextMenuItem.cs" />
     <Compile Include="UI\ViewModels\FocusedAppItemViewModel.cs" />
-    <Compile Include="UI\ViewModels\DevicePickerViewModel.cs" />
     <Compile Include="UI\Helpers\MediaSessionWatcher.cs" />
     <Compile Include="UI\ViewModels\FocusedDeviceViewModel.cs" />
     <Compile Include="UI\ViewModels\IAppItemViewModel.cs" />

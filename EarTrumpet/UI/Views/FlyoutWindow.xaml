@@ -123,11 +123,49 @@
                             </Style.Triggers>
                         </Style>
                     </Grid.Style>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Other outputs, shown above the header while expanded. Click one to make it the default. -->
+                    <Border Grid.Row="0" Theme:Brush.Background="FlyoutBackground">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsExpanded}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <ItemsControl Focusable="False"
+                                      IsTabStop="False"
+                                      ItemsSource="{Binding OtherDevices}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Height="{DynamicResource Mutable_DeviceTitleCellHeight}"
+                                            Click="OtherDevice_Click"
+                                            Style="{StaticResource ExpandCollapseButtonStyle}">
+                                        <TextBlock Margin="12,0,32,0"
+                                                   HorizontalAlignment="Left"
+                                                   Theme:Brush.Foreground="{Binding (Theme:Brush.Foreground), RelativeSource={RelativeSource AncestorType=Button}}"
+                                                   Style="{StaticResource DeviceTitleTextStyle}"
+                                                   Text="{Binding DisplayName}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+
                     <ItemsControl Name="DevicesList"
+                                  Grid.Row="1"
                                   FocusVisualStyle="{x:Null}"
                                   IsTabStop="False"
                                   ItemsSource="{Binding Devices}" />
-                    <Button Height="{DynamicResource Mutable_DeviceTitleCellHeight}"
+                    <Button Grid.Row="1"
+                            Height="{DynamicResource Mutable_DeviceTitleCellHeight}"
                             Command="{Binding ExpandCollapse}"
                             IsEnabled="{Binding CanExpand}">
                         <Button.Style>
@@ -185,25 +223,6 @@
                                 </TextBlock>
                             </Grid>
                         </Button.Content>
-                    </Button>
-                    <Button Name="DevicePickerButton"
-                            Width="40"
-                            Height="{DynamicResource Mutable_DeviceTitleCellHeight}"
-                            Margin="0,0,40,0"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top"
-                            Click="DevicePickerButton_Click"
-                            Focusable="False"
-                            FocusVisualStyle="{x:Null}"
-                            IsEnabled="{Binding CanExpand}"
-                            Style="{StaticResource ExpandCollapseButtonStyle}"
-                            ToolTip="Change output device">
-                        <TextBlock HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Theme:Brush.Foreground="{Binding (Theme:Brush.Foreground), RelativeSource={RelativeSource AncestorType=Button}}"
-                                   FontSize="{DynamicResource Mutable_ExpandCollapseButtonGlyphFontSize}"
-                                   Style="{StaticResource GlyphTextBlockStyle}"
-                                   Text="&#xE7F5;" />
                     </Button>
                 </Grid>
             </Grid>

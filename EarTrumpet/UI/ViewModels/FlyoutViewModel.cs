@@ -20,6 +20,9 @@ namespace EarTrumpet.UI.ViewModels
         public bool IsExpanded { get; private set; }
         public bool IsExpandingOrCollapsing { get; private set; }
         public bool CanExpand => _mainViewModel.AllDevices.Count > 1;
+        // Every output except the current default; shown above the header while expanded. Click one to switch.
+        public System.Collections.Generic.IEnumerable<DeviceViewModel> OtherDevices =>
+            _mainViewModel.AllDevices.Where(d => d.Id != _mainViewModel.Default?.Id).ToList();
         public string DeviceNameText => Devices.Count > 0 ? Devices[0].DisplayName : null;
         public FlyoutViewState State { get; private set; }
         public ObservableCollection<DeviceViewModel> Devices { get; private set; }
@@ -78,7 +81,7 @@ namespace EarTrumpet.UI.ViewModels
 
         private void AddDevice(DeviceViewModel device)
         {
-            if (IsExpanded || Devices.Count == 0)
+            if (Devices.Count == 0)
             {
                 device.Apps.CollectionChanged += Apps_CollectionChanged;
                 Devices.Insert(0, device);
@@ -150,6 +153,7 @@ namespace EarTrumpet.UI.ViewModels
             RaisePropertyChanged(nameof(IsExpanded));
             RaisePropertyChanged(nameof(CanExpand));
             RaisePropertyChanged(nameof(DeviceNameText));
+            RaisePropertyChanged(nameof(OtherDevices));
             InvalidateWindowSize();
         }
 
@@ -193,32 +197,6 @@ namespace EarTrumpet.UI.ViewModels
         {
             IsExpanded = !IsExpanded;
             _settings.IsExpanded = IsExpanded;
-            if (IsExpanded)
-            {
-                // Add any that aren't existing.
-                foreach (var device in _mainViewModel.AllDevices)
-                {
-                    if (!Devices.Contains(device))
-                    {
-                        device.Apps.CollectionChanged += Apps_CollectionChanged;
-                        Devices.Insert(0, device);
-                    }
-                }
-            }
-            else
-            {
-                // Remove all but the default.
-                for (int i = Devices.Count - 1; i >= 0; i--)
-                {
-                    var device = Devices[i];
-                    if (device.Id != _mainViewModel.Default?.Id)
-                    {
-                        device.Apps.CollectionChanged -= Apps_CollectionChanged;
-                        Devices.Remove(device);
-                    }
-                }
-            }
-
             UpdateTextVisibility();
             RaiseDevicesChanged();
         }
@@ -285,11 +263,6 @@ namespace EarTrumpet.UI.ViewModels
                 (oldState == FlyoutViewState.Closing_Stage1 && newState == FlyoutViewState.Hidden) ||
                 (oldState == FlyoutViewState.Closing_Stage2 && newState == FlyoutViewState.Hidden);
             Debug.Assert(isValidStateTransition);
-        }
-
-        public void OpenDevicePicker(FrameworkElement container)
-        {
-            OpenPopup(new DevicePickerViewModel(_mainViewModel), container);
         }
 
         public void OpenPopup(object vm, FrameworkElement container)
