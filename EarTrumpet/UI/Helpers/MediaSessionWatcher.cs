@@ -59,6 +59,7 @@ namespace EarTrumpet.UI.Helpers
         private string _trackKey;
         private bool _wasPlaying;
         private ImageSource _thumbnail;
+        private MediaSnapshot _snapshot;
 
         public async void Start()
         {
@@ -86,7 +87,7 @@ namespace EarTrumpet.UI.Helpers
             {
                 _session.MediaPropertiesChanged -= OnSessionChanged;
                 _session.PlaybackInfoChanged -= OnSessionChanged;
-                _session.TimelinePropertiesChanged -= OnSessionChanged;
+                _session.TimelinePropertiesChanged -= OnTimelineChanged;
             }
 
             _session = _manager?.GetCurrentSession();
@@ -96,7 +97,7 @@ namespace EarTrumpet.UI.Helpers
             {
                 _session.MediaPropertiesChanged += OnSessionChanged;
                 _session.PlaybackInfoChanged += OnSessionChanged;
-                _session.TimelinePropertiesChanged += OnSessionChanged;
+                _session.TimelinePropertiesChanged += OnTimelineChanged;
             }
             Refresh(show);
         }
@@ -107,6 +108,26 @@ namespace EarTrumpet.UI.Helpers
             _dispatcher.BeginInvoke((Action)(() => Refresh(true)));
         }
 
+        // Players fire this constantly while playing; just keep the position current, don't rebuild anything.
+        private void OnTimelineChanged(GlobalSystemMediaTransportControlsSession sender, object args)
+        {
+            _dispatcher.BeginInvoke((Action)(() =>
+            {
+                var snapshot = _snapshot;
+                if (snapshot == null || sender != _session) return;
+                try
+                {
+                    var timeline = sender.GetTimelineProperties();
+                    snapshot.Duration = timeline.EndTime - timeline.StartTime;
+                    snapshot.SetPosition(timeline.Position - timeline.StartTime, timeline.LastUpdatedTime);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"MediaSessionWatcher OnTimelineChanged: {ex.Message}");
+                }
+            }));
+        }
+
         private async void Refresh(bool allowShow)
         {
             try
@@ -114,6 +135,7 @@ namespace EarTrumpet.UI.Helpers
                 var session = _session;
                 if (session == null)
                 {
+                    _snapshot = null;
                     Changed?.Invoke(null, false);
                     return;
                 }
@@ -151,6 +173,7 @@ namespace EarTrumpet.UI.Helpers
                 var show = allowShow && !string.IsNullOrWhiteSpace(snapshot.Title) &&
                            (trackChanged || snapshot.IsPlaying != _wasPlaying);
                 _wasPlaying = snapshot.IsPlaying;
+                _snapshot = snapshot;
                 Changed?.Invoke(snapshot, show);
             }
             catch (Exception ex)

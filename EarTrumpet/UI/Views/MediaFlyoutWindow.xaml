@@ -3,8 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="EarTrumpet Now Playing"
         Width="380"
-        AllowsTransparency="True"
-        Background="Transparent"
+        Background="#202327"
         ResizeMode="NoResize"
         ShowActivated="False"
         ShowInTaskbar="False"
@@ -47,11 +46,9 @@
             </Setter>
         </Style>
     </Window.Resources>
-    <Border Margin="8"
-            Background="#F2202327"
+    <Border Background="#202327"
             BorderBrush="#33FFFFFF"
-            BorderThickness="1"
-            CornerRadius="8">
+            BorderThickness="1">
         <Grid Margin="16,14,16,12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />

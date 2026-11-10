@@ -16,13 +16,14 @@ namespace EarTrumpet.UI.Views
     /// </summary>
     public partial class MediaFlyoutWindow : Window
     {
-        private static readonly TimeSpan VisibleDuration = TimeSpan.FromSeconds(4);
+        private static readonly TimeSpan VisibleDuration = TimeSpan.FromSeconds(2.5);
 
         private readonly MediaSessionWatcher _watcher;
         private readonly DispatcherTimer _hideTimer;
         private readonly DispatcherTimer _positionTimer;
         private MediaSnapshot _snapshot;
         private bool _isShown;
+        private ImageSource _shownThumbnail;
 
         public MediaFlyoutWindow(MediaSessionWatcher watcher)
         {
@@ -33,7 +34,7 @@ namespace EarTrumpet.UI.Views
 
             _hideTimer = new DispatcherTimer { Interval = VisibleDuration };
             _hideTimer.Tick += (_, __) => HideFlyout();
-            _positionTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+            _positionTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000) };
             _positionTimer.Tick += (_, __) => UpdateTimeline();
 
             MouseEnter += (_, __) => _hideTimer.Stop();
@@ -43,6 +44,7 @@ namespace EarTrumpet.UI.Views
             {
                 // Tool window (no Alt+Tab entry) that never steals focus from what you're doing.
                 this.ApplyExtendedWindowStyle(User32.WS_EX_TOOLWINDOW | User32.WS_EX_NOACTIVATE);
+                this.EnableRoundedCornersIfApplicable();
             };
         }
 
@@ -61,20 +63,19 @@ namespace EarTrumpet.UI.Views
             PrevButton.IsEnabled = snapshot.CanPrevious;
             NextButton.IsEnabled = snapshot.CanNext;
             PlayPauseButton.IsEnabled = snapshot.CanPlayPause;
-            ThumbnailBorder.Background = snapshot.Thumbnail == null ? null :
-                new ImageBrush(snapshot.Thumbnail) { Stretch = Stretch.UniformToFill };
+            if (!ReferenceEquals(snapshot.Thumbnail, _shownThumbnail))
+            {
+                _shownThumbnail = snapshot.Thumbnail;
+                ThumbnailBorder.Background = _shownThumbnail == null ? null :
+                    new ImageBrush(_shownThumbnail) { Stretch = Stretch.UniformToFill };
+            }
             DurationText.Text = Format(snapshot.Duration);
             UpdateTimeline();
 
+            // Only a real event (new track, play/pause, new app) shows it; plain updates must never extend it.
             if (show)
             {
                 ShowFlyout();
-            }
-            else if (_isShown)
-            {
-                // Keep it open a bit longer while you're interacting with it.
-                _hideTimer.Stop();
-                if (!IsMouseOver) _hideTimer.Start();
             }
         }
 
@@ -90,15 +91,13 @@ namespace EarTrumpet.UI.Views
         private void ShowFlyout()
         {
             var workArea = SystemParameters.WorkArea;
-            Left = workArea.Left + 8;
-            Top = workArea.Top + 8;
+            Left = workArea.Left + 16;
+            Top = workArea.Top + 16;
 
             if (!_isShown)
             {
                 _isShown = true;
-                Opacity = 0;
                 Show();
-                BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150)));
                 _positionTimer.Start();
             }
 
@@ -113,12 +112,7 @@ namespace EarTrumpet.UI.Views
 
             _isShown = false;
             _positionTimer.Stop();
-            var fade = new DoubleAnimation(Opacity, 0, TimeSpan.FromMilliseconds(150));
-            fade.Completed += (_, __) =>
-            {
-                if (!_isShown) Hide();
-            };
-            BeginAnimation(OpacityProperty, fade);
+            Hide();
         }
 
         private void UpdateTimeline()
