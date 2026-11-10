@@ -29,13 +29,55 @@ namespace EarTrumpet.Interop.Helpers
             Bottom = 3
         }
 
+        [DllImport("user32.dll")]
+        private static extern bool IsWindow(IntPtr hWnd);
+
         public static uint Dpi => User32.GetDpiForWindow(GetHwnd());
+
+        // The taskbar the flyout should open next to. Defaults to the primary taskbar; when the flyout opens we pick the
+        // taskbar on the monitor the mouse is on, so clicking the tray icon on a second monitor opens it there.
+        private static IntPtr _targetHwnd;
+
+        public static void UpdateTargetFromCursor()
+        {
+            var primary = GetHwnd();
+            _targetHwnd = primary;
+            try
+            {
+                var cursorScreen = Screen.FromPoint(Cursor.Position);
+                if (primary != IntPtr.Zero && Screen.FromHandle(primary).Equals(cursorScreen))
+                {
+                    return;
+                }
+
+                // Taskbars on additional monitors are Shell_SecondaryTrayWnd windows.
+                var hWnd = IntPtr.Zero;
+                while ((hWnd = User32.FindWindowEx(IntPtr.Zero, hWnd, "Shell_SecondaryTrayWnd", IntPtr.Zero)) != IntPtr.Zero)
+                {
+                    if (Screen.FromHandle(hWnd).Equals(cursorScreen))
+                    {
+                        _targetHwnd = hWnd;
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"WindowsTaskbar UpdateTargetFromCursor: {ex}");
+            }
+        }
+
+        private static IntPtr GetTargetHwnd()
+        {
+            return (_targetHwnd != IntPtr.Zero && IsWindow(_targetHwnd)) ? _targetHwnd : GetHwnd();
+        }
 
         public static State Current
         {
             get
             {
-                var hWnd = GetHwnd();
+                var hWnd = GetTargetHwnd();
+                var isPrimary = hWnd == GetHwnd();
                 var state = new State
                 {
                     ContainingScreen = Screen.FromHandle(hWnd),
@@ -48,7 +90,8 @@ namespace EarTrumpet.Interop.Helpers
 
                 // SHAppBarMessage: Understands Taskbar auto-hide
                 // state (the window is positioned across screens).
-                if (Shell32.SHAppBarMessage(AppBarMessage.GetTaskbarPos, ref appBarData) != UIntPtr.Zero)
+                // (GetTaskbarPos only ever describes the primary taskbar, so other monitors use the window rectangle.)
+                if (isPrimary && Shell32.SHAppBarMessage(AppBarMessage.GetTaskbarPos, ref appBarData) != UIntPtr.Zero)
                 {
                     state.Size = appBarData.rect;
                     state.Location = (Position)appBarData.uEdge;

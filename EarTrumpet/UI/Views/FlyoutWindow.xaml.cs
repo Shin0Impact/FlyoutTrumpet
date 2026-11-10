@@ -60,6 +60,7 @@ namespace EarTrumpet.UI.Views
             switch (_viewModel.State)
             {
                 case FlyoutViewState.Opening:
+                    WindowsTaskbar.UpdateTargetFromCursor();
                     var taskbar = WindowsTaskbar.Current;
 
                     Show();
