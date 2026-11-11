@@ -56,6 +56,7 @@ namespace EarTrumpet.UI.Helpers
         private string _text;
         private RECT _iconLocation;
         private System.Drawing.Point _cursorPosition;
+        private int _lastBoundsCheck;
         private int _remainingTicks;
         private bool _hasAlreadyProcessedButtonUp;
         private bool HasAlreadyProcessedButtonUp
@@ -166,11 +167,20 @@ namespace EarTrumpet.UI.Helpers
             }
             else if (msg.Msg == User32.WM_INPUT)
             {
-                _cursorPosition = System.Windows.Forms.Cursor.Position;
-                if (InputHelper.ProcessMouseInputMessage(msg.LParam, ref _cursorPosition, out int wheelDelta) &&
-                                IsCursorWithinNotifyIconBounds() && wheelDelta != 0)
+                if (InputHelper.TryGetWheelDelta(msg.LParam, out int wheelDelta))
                 {
-                    Scrolled?.Invoke(this, wheelDelta);
+                    _cursorPosition = System.Windows.Forms.Cursor.Position;
+                    if (IsCursorWithinNotifyIconBounds())
+                    {
+                        Scrolled?.Invoke(this, wheelDelta);
+                    }
+                }
+                else if (Environment.TickCount - _lastBoundsCheck > 100)
+                {
+                    // Throttled: notice the cursor leaving the icon so raw input can be unregistered.
+                    _lastBoundsCheck = Environment.TickCount;
+                    _cursorPosition = System.Windows.Forms.Cursor.Position;
+                    IsCursorWithinNotifyIconBounds();
                 }
             }
         }

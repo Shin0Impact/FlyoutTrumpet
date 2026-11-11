@@ -47,59 +47,29 @@ namespace EarTrumpet.Interop.Helpers
             return ret;
         }
 
-        public static bool ProcessMouseInputMessage(IntPtr lParam, ref System.Drawing.Point cursorPosition, out int wheelDelta)
+        // Cheap per-message parse: a gaming mouse sends thousands of WM_INPUT per second,
+        // so only wheel messages are decoded and nothing is allocated.
+        private static readonly object _rawLock = new object();
+        private static IntPtr _rawBuffer = Marshal.AllocHGlobal(256);
+        private const uint RawBufferSize = 256;
+
+        public static bool TryGetWheelDelta(IntPtr lParam, out int wheelDelta)
         {
             wheelDelta = 0;
-            bool isApplicableMouseMessage = false;
-
-            var header = new User32.RAWINPUTHEADER();
-            var headerSize = (uint)Marshal.SizeOf(header);
-
-            uint bufferSize = 0;
-            uint res = User32.GetRawInputData(lParam, User32.RID_INPUT, IntPtr.Zero, ref bufferSize, headerSize);
-            if (res == 0)
+            lock (_rawLock)
             {
-                var dataPtr = Marshal.AllocHGlobal((int)bufferSize);
-                uint writtenBytes = User32.GetRawInputData(lParam, User32.RID_INPUT, dataPtr, ref bufferSize, headerSize);
-                if (writtenBytes == bufferSize)
-                {
-                    var rawInput = Marshal.PtrToStructure<User32.RAWINPUT>(dataPtr);
-                    if (rawInput.header.dwType == User32.RIM_TYPEMOUSE)
-                    {
-                        isApplicableMouseMessage = true;
+                uint size = RawBufferSize;
+                uint headerSize = (uint)Marshal.SizeOf(typeof(User32.RAWINPUTHEADER));
+                uint written = User32.GetRawInputData(lParam, User32.RID_INPUT, _rawBuffer, ref size, headerSize);
+                if (written == uint.MaxValue || written == 0) return false;
 
-                        if (rawInput.mouse.usFlags.HasFlag(User32.RAWMOUSE_FLAGS.MOUSE_MOVE_ABSOLUTE))
-                        {
-                            int width, height;
-                            if (rawInput.mouse.usFlags.HasFlag(User32.RAWMOUSE_FLAGS.MOUSE_VIRTUAL_DESKTOP))
-                            {
-                                width = User32.GetSystemMetricsForDpi(User32.SystemMetrics.SM_CXVIRTUALSCREEN, WindowsTaskbar.Dpi);
-                                height = User32.GetSystemMetricsForDpi(User32.SystemMetrics.SM_CYVIRTUALSCREEN, WindowsTaskbar.Dpi);
-                            }
-                            else
-                            {
-                                width = Screen.PrimaryScreen.Bounds.Width;
-                                height = Screen.PrimaryScreen.Bounds.Height;
-                            }
+                var rawInput = Marshal.PtrToStructure<User32.RAWINPUT>(_rawBuffer);
+                if (rawInput.header.dwType != User32.RIM_TYPEMOUSE) return false;
+                if ((rawInput.mouse.usButtonFlags & User32.RI_MOUSE_WHEEL) != User32.RI_MOUSE_WHEEL) return false;
 
-                            cursorPosition.X = rawInput.mouse.lLastX / 65535 * width;
-                            cursorPosition.Y = rawInput.mouse.lLastY / 65535 * height;
-                        }
-                        else
-                        {
-                            cursorPosition.X += rawInput.mouse.lLastX;
-                            cursorPosition.Y += rawInput.mouse.lLastY;
-                        }
-
-                        if ((rawInput.mouse.usButtonFlags & User32.RI_MOUSE_WHEEL) == User32.RI_MOUSE_WHEEL)
-                        {
-                            wheelDelta = rawInput.mouse.usButtonData;
-                        }
-                    }
-                }
-                Marshal.FreeHGlobal(dataPtr);
+                wheelDelta = rawInput.mouse.usButtonData;
+                return wheelDelta != 0;
             }
-            return isApplicableMouseMessage;
         }
     }
 }
